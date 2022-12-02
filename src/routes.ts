@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import * as AuthController from './controller/auth.controller'
-
+import { Auth } from './middlewares/auth';
 
 const router = Router();
 
@@ -12,7 +12,7 @@ router.get('/ping',(req: Request, res:Response) => {
 
 router.post('/register', AuthController.register);
 router.post('/login', AuthController.login);
-router.get('/users', AuthController.listUsers);
+router.get('/users', Auth.private, AuthController.listUsers);
 
 
 

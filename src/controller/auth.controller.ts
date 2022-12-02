@@ -1,9 +1,12 @@
 import { Request, Response } from "express";
 import { PrismaClient} from "@prisma/client";
 import bcrypt, { hash } from 'bcrypt';
-
+import dotenv from 'dotenv';
+import authConfig from '../config/auth.json';
+import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
+dotenv.config();
 
 
 prisma.$use(async (params:any, next:any) => {
@@ -16,6 +19,15 @@ prisma.$use(async (params:any, next:any) => {
 
     return result
 });
+
+
+function generateToken(userObject: object){
+    return jwt.sign(
+        userObject, 
+        process.env.JWT_KEY as string, 
+        {expiresIn: 3600}
+    );
+}
 
 
 export const register = async (req:Request, res:Response) => {
@@ -34,7 +46,8 @@ export const register = async (req:Request, res:Response) => {
                     }
                 });
                 user.password = '*****';
-                return res.status(201).send({user})
+                const token = generateToken(user);
+                return res.status(201).send({user, token});
             }
         }else{
             return res.status(400).send({error: "Any data hasn't been received"})
@@ -72,11 +85,14 @@ export const login = async (req:Request, res:Response) => {
 
             user.password = '*****';
 
+            const token = generateToken(user);
+
+
                 
-            return res.status(200).json({user})
+            return res.status(200).json({user, token});
         }
         else{
-            return res.status(400).send({error: "Any data hasn't been received"})
+            return res.status(400).send({error: "Any data hasn't been received"});
         }
     }
     catch(err: any){
@@ -94,6 +110,7 @@ export const listUsers = async (req:Request, res:Response) => {
                 password: false
             }
         });
+
     
         return res.status(200).json({usersList});
     }
